@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local secrets
+.env
+etl/.env
+
+# ETL dry-run output (regenerated locally, not committed)
+etl/output/
+
+# Node / Next.js (Phase 1 app layer, added later)
+node_modules/
+.next/
+.vercel/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code local session state / test-run artifacts
+.claude/
+.playwright-mcp/

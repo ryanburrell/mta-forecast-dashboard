@@ -1,0 +1,39 @@
+name: ETL - Model 1 (demand & supply)
+
+on:
+  schedule:
+    # Daily at 09:00 UTC (~05:00 America/New_York). PRD OQ-3 leaves exact
+    # cadence open; daily matches NFR-4's stated default and GitHub Actions'
+    # free-tier scheduling comfortably for a single job this size.
+    - cron: "0 9 * * *"
+  workflow_dispatch: {}  # allow manual runs from the Actions tab
+
+jobs:
+  run-etl:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: etl
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: etl/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Model 1 pipeline and write to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MTA_SOCRATA_APP_TOKEN: ${{ secrets.MTA_SOCRATA_APP_TOKEN }}
+        run: python run_pipeline.py --write-to-supabase
+        # No fallback/continue-on-error here on purpose: a failed run must
+        # fail the job loudly (PRD risk table) rather than silently
+        # succeeding. Because run_pipeline.py only writes after the full
+        # pipeline succeeds in memory, a failure here leaves the previous
+        # model_run's data as the latest the app serves (NFR-5).

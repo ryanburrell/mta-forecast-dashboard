@@ -1,0 +1,6 @@
+requests>=2.34,<3
+pandas>=3.0,<4
+numpy>=2.5,<3
+python-dotenv>=1.2,<2
+holidays>=0.100,<1
+supabase>=2.31,<3

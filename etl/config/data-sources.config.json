@@ -1,0 +1,59 @@
+{
+  "_comment": "Central config for all external data sources used by the ETL pipeline. Scripts in /etl should read from this file rather than hardcoding URLs, so a source change is a one-line edit here, not a code change.",
+
+  "mta_subway_hourly_ridership": {
+    "description": "Model 1 demand input, Model 3 crowding input",
+    "platform": "socrata",
+    "domain": "data.ny.gov",
+    "dataset_id": "5wq4-mkjj",
+    "endpoint": "https://data.ny.gov/resource/5wq4-mkjj.json",
+    "verified": true,
+    "notes": "Confirmed live and returning valid records. ridership/transfers fields return as strings - cast to numeric in ETL. Field is station ENTRIES, not journey legs - see project notes."
+  },
+
+  "mta_subway_major_incidents": {
+    "description": "Model 2 delay/incident basis",
+    "platform": "socrata",
+    "domain": "data.ny.gov",
+    "dataset_id": "uqnw-2qfk",
+    "endpoint": "https://data.ny.gov/resource/uqnw-2qfk.json",
+    "dataset_label": "MTA Subway Major Incidents: Beginning 2025",
+    "verified": "endpoint pattern confirmed via sibling dataset (same platform/domain); confirm columns on first real ETL run",
+    "notes": "Monthly granularity, by subway-line/delay-category/division/day-type. Only covers 'major incidents' (50+ trains delayed) - undercounts routine minor delays. Must be disclosed in-product per PRD FR-12/NG6. Prior-year editions exist as separate datasets if more history is needed: 'Beginning 2020' and '2015-2019' - search data.ny.gov catalog if a longer training window is wanted."
+  },
+
+  "gtfs_static_subway_regular": {
+    "description": "Fallback/baseline schedule - updated only a few times a year",
+    "platform": "static_zip",
+    "endpoint": "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip",
+    "verified": true,
+    "source": "MTA official developer announcement (HTTPS migration), confirmed still active via third-party feed-health monitor"
+  },
+
+  "gtfs_static_subway_supplemented": {
+    "description": "Preferred supply-side source - reflects planned service changes, updated hourly",
+    "platform": "static_zip",
+    "endpoint": "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_supplemented.zip",
+    "verified": true,
+    "recommended_for": ["model_1_supply_side"],
+    "notes": "Use this over the regular feed for Model 1's scheduled-supply calculation."
+  },
+
+  "nyc_special_event_permits": {
+    "description": "Model 3 event-uplift coefficient basis",
+    "platform": "socrata",
+    "domain": "data.cityofnewyork.us",
+    "dataset_id": "TBD",
+    "endpoint": "TBD",
+    "verified": false,
+    "notes": "Not yet verified - confirm exact dataset ID/endpoint before Phase 3 build starts."
+  },
+
+  "us_holiday_calendar": {
+    "description": "Baseline-training exclusion filter (PRD FR-3)",
+    "platform": "python_package",
+    "package": "holidays",
+    "verified": false,
+    "notes": "Recommended over hardcoding a date list - confirm package choice during Phase 1 implementation."
+  }
+}
