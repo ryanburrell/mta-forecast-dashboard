@@ -1,21 +1,23 @@
 import type { RouteRef } from "@/lib/types";
-import { DAY_OF_WEEK_LABELS } from "@/lib/types";
+import { dayOfWeekLabel, parseDateInputValue, toDateInputValue, toModelDayOfWeek } from "@/lib/date";
 
 type Props = {
   availableRoutes: RouteRef[];
   selectedRoutes: string[];
   onSelectedRoutesChange: (routes: string[]) => void;
-  dayOfWeek: number;
-  onDayOfWeekChange: (dayOfWeek: number) => void;
+  selectedDate: Date;
+  onSelectedDateChange: (date: Date) => void;
 };
 
-// FR-7 (route selection, one or more) + FR-8 (day-of-week selection).
+// FR-7 (route selection, one or more) + FR-8 (day-of-week selection, exposed
+// as a date picker - see lib/date.ts for why the date only ever determines
+// which day-of-week bucket gets queried, not a date-specific forecast).
 export default function ParameterPanel({
   availableRoutes,
   selectedRoutes,
   onSelectedRoutesChange,
-  dayOfWeek,
-  onDayOfWeekChange,
+  selectedDate,
+  onSelectedDateChange,
 }: Props) {
   function toggleRoute(routeId: string) {
     if (selectedRoutes.includes(routeId)) {
@@ -24,6 +26,8 @@ export default function ParameterPanel({
       onSelectedRoutesChange([...selectedRoutes, routeId]);
     }
   }
+
+  const modelDayOfWeek = toModelDayOfWeek(selectedDate);
 
   return (
     <div className="flex flex-col gap-4 rounded border border-zinc-200 p-4 dark:border-zinc-800">
@@ -55,21 +59,25 @@ export default function ParameterPanel({
       </div>
 
       <div>
-        <label htmlFor="day-of-week" className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Day of week
+        <label htmlFor="forecast-date" className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          Date
         </label>
-        <select
-          id="day-of-week"
-          value={dayOfWeek}
-          onChange={(e) => onDayOfWeekChange(Number(e.target.value))}
-          className="rounded border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-        >
-          {DAY_OF_WEEK_LABELS.map((label, index) => (
-            <option key={label} value={index}>
-              {label}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <input
+            id="forecast-date"
+            type="date"
+            value={toDateInputValue(selectedDate)}
+            onChange={(e) => {
+              if (e.target.value) onSelectedDateChange(parseDateInputValue(e.target.value));
+            }}
+            className="rounded border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          />
+          <span className="text-sm text-zinc-500">{dayOfWeekLabel(modelDayOfWeek)}</span>
+        </div>
+        <p className="mt-1 text-xs text-zinc-400">
+          Forecasts represent a typical {dayOfWeekLabel(modelDayOfWeek)}, not conditions specific to this
+          exact date - the model doesn&apos;t account for holidays or one-off events on the date you pick.
+        </p>
       </div>
     </div>
   );

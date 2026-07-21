@@ -7,6 +7,7 @@ import ParameterPanel from "@/components/parameter-panel/ParameterPanel";
 import DemandSupplyChart from "@/components/charts/DemandSupplyChart";
 import LastUpdated from "@/components/LastUpdated";
 import DisclosureFootnote from "@/components/DisclosureFootnote";
+import { toModelDayOfWeek } from "@/lib/date";
 import type { DemandSupplyResponse, RouteRef, StationFeatureCollection } from "@/lib/types";
 
 // Leaflet touches `window` at import time, so the map can only render on the
@@ -22,7 +23,12 @@ const StationMap = dynamic(() => import("@/components/map/StationMap"), {
 });
 
 const DEFAULT_ROUTES = ["L"]; // matches the PRD's own example scenario (§5)
-const DEFAULT_DAY_OF_WEEK = 5; // Saturday
+// A fixed Saturday, not `nextSaturdayFrom(new Date())` - computing "today"
+// client-side would make the initial render depend on wall-clock time,
+// which can mismatch between server-render and client-hydration (different
+// timezones/instants) and trigger a hydration warning. The date picker is
+// fully functional regardless of how stale this default gets.
+const DEFAULT_DATE = new Date(2026, 6, 25); // Saturday
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -39,10 +45,11 @@ function buildQuery(routes: string[], dayOfWeek: number): string {
 
 export default function DashboardShell() {
   const [selectedRoutes, setSelectedRoutes] = useState<string[]>(DEFAULT_ROUTES);
-  const [dayOfWeek, setDayOfWeek] = useState<number>(DEFAULT_DAY_OF_WEEK);
+  const [selectedDate, setSelectedDate] = useState<Date>(DEFAULT_DATE);
 
   const { data: routesData } = useSWR<{ routes: RouteRef[] }>("/api/routes", fetcher);
 
+  const dayOfWeek = toModelDayOfWeek(selectedDate);
   const query = buildQuery(selectedRoutes, dayOfWeek);
   const {
     data: demandSupply,
@@ -61,7 +68,7 @@ export default function DashboardShell() {
       <header>
         <h1 className="text-2xl font-semibold">NYC Subway Demand Forecast</h1>
         <p className="text-sm text-zinc-500">
-          Forecasted ridership vs. scheduled service, by route and day of week.
+          Forecasted ridership vs. scheduled service, by route and date.
         </p>
       </header>
 
@@ -69,8 +76,8 @@ export default function DashboardShell() {
         availableRoutes={routesData?.routes ?? []}
         selectedRoutes={selectedRoutes}
         onSelectedRoutesChange={setSelectedRoutes}
-        dayOfWeek={dayOfWeek}
-        onDayOfWeekChange={setDayOfWeek}
+        selectedDate={selectedDate}
+        onSelectedDateChange={setSelectedDate}
       />
 
       {error && (
