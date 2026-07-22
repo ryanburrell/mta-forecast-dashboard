@@ -11,18 +11,28 @@ export default function DisclosureFootnote() {
           analysis, but was intentionally deferred for this project&apos;s scope.
         </li>
         <li>
-          Delay-risk forecasts (planned) are based on observed public delay/incident history,
-          not actual MTA fleet-maintenance records, which are not publicly available.
+          Delay-risk forecasts are based on observed public incident and delay-minutes
+          history (MTA&apos;s own published &quot;Major Incidents&quot; and &quot;Customer
+          Journey&quot; datasets), not actual fleet-maintenance records, which are not
+          publicly available. &quot;Major incident&quot; is MTA&apos;s own definition (50+
+          trains delayed) - this undercounts routine minor delays. Neither source has real
+          day-of-week granularity: incident rates use a weekday/weekend split broadcast
+          across the matching days, and delay-minutes are a single average that doesn&apos;t
+          vary by day at all. Degradation % is a lower-bound estimate assuming each major
+          incident delays exactly 50 trains (the qualifying threshold), not a fitted model.
         </li>
         <li>
-          Holidays and known special events are excluded from the baseline training data.
-          An event-scenario adjustment (planned) will approximate event impact using a
+          Holidays and known special events are excluded from the baseline demand training
+          data. An event-scenario adjustment (planned) will approximate event impact using a
           precomputed coefficient, not a live event feed.
         </li>
         <li>
           Route-level ridership figures attribute each station&apos;s total ridership to
           every route serving it, so figures at transfer stations are not directly
-          comparable to citywide totals.
+          comparable to citywide totals. Similarly, the J/Z delay-risk figures are
+          identical (the source data only reports them combined), and the W train&apos;s
+          delay-risk figures are borrowed from the N train (the source data has no W
+          entries at all - their incidents are historically reported under N).
         </li>
       </ul>
     </footer>

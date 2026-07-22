@@ -49,3 +49,26 @@ def parse_station_routes(station_complex_name: str) -> list[str]:
     if not match:
         return []
     return [token.strip() for token in match.group(1).split(",") if token.strip()]
+
+
+# Model 2's two source datasets (MTA Subway Major Incidents, MTA Subway
+# Customer Journey-Focused Metrics) use a third, different `line` labeling
+# convention from either the ridership dataset or GTFS: "JZ" is combined
+# (not separate J/Z), and the three shuttles are separate named lines
+# instead of being combined into "S". Neither dataset has a W row at all -
+# see data-sources.config.json's mta_subway_major_incidents notes for why
+# (its incidents are historically folded into N's reporting).
+_INCIDENT_LINE_TO_ROUTE_IDS: dict[str, list[str]] = {
+    "JZ": ["J", "Z"],
+    "S 42nd": ["S"],
+    "S Rock": ["S"],
+    "S Fkln": ["S"],
+}
+
+
+def incident_line_to_route_ids(line: str) -> list[str]:
+    """Map a Major Incidents / Customer Journey `line` value to this project's
+    route_id(s). Most lines map 1:1; JZ duplicates to both J and Z (the
+    source can't distinguish which incident affected which route); the three
+    named shuttles all aggregate into this project's combined "S"."""
+    return _INCIDENT_LINE_TO_ROUTE_IDS.get(line, [line])

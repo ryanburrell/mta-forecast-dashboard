@@ -12,14 +12,25 @@
   },
 
   "mta_subway_major_incidents": {
-    "description": "Model 2 delay/incident basis",
+    "description": "Model 2 delay/incident basis - incident count",
     "platform": "socrata",
     "domain": "data.ny.gov",
-    "dataset_id": "uqnw-2qfk",
-    "endpoint": "https://data.ny.gov/resource/uqnw-2qfk.json",
-    "dataset_label": "MTA Subway Major Incidents: Beginning 2025",
-    "verified": "endpoint pattern confirmed via sibling dataset (same platform/domain); confirm columns on first real ETL run",
-    "notes": "Monthly granularity, by subway-line/delay-category/division/day-type. Only covers 'major incidents' (50+ trains delayed) - undercounts routine minor delays. Must be disclosed in-product per PRD FR-12/NG6. Prior-year editions exist as separate datasets if more history is needed: 'Beginning 2020' and '2015-2019' - search data.ny.gov catalog if a longer training window is wanted."
+    "dataset_id": "ereg-mcvp",
+    "endpoint": "https://data.ny.gov/resource/ereg-mcvp.json",
+    "dataset_label": "MTA Subway Major Incidents: Beginning 2015",
+    "verified": true,
+    "notes": "CORRECTED during Phase 2 build: the originally configured id (uqnw-2qfk, 'Beginning 2025' edition) returns 403 'authentication_required' - it is not publicly accessible despite being catalogued as such. ereg-mcvp is the actual public, live edition of the same 'Major Incidents' series (data confirmed current through 2026-05), found via the Socrata catalog API (api.us.socrata.com/api/catalog/v1). Monthly granularity, by line/category/division/day_type (1=weekday, 2=weekend only - no finer day-of-week split exists in the public data). 'Major incident' = 50+ trains delayed by MTA's own definition - undercounts routine minor delays, disclosed per PRD FR-12/NG6. line values use 'JZ' (combined) and 'S 42nd'/'S Rock'/'S Fkln' (separate shuttles, unlike this project's combined 'S' label) - see lib/route_labels.py. The W train has zero rows in this dataset's entire history; its incidents are historically folded into 'N' reporting (confirmed via a broader sibling dataset's column description) - handled as a disclosed pass-through from N, not a fabricated zero."
+  },
+
+  "mta_subway_customer_journey_metrics": {
+    "description": "Model 2 delay/incident basis - delay minutes (Additional Platform Time + Additional Train Time)",
+    "platform": "socrata",
+    "domain": "data.ny.gov",
+    "dataset_id": "r7qk-6tcy",
+    "endpoint": "https://data.ny.gov/resource/r7qk-6tcy.json",
+    "dataset_label": "MTA Subway Customer Journey-Focused Metrics: Beginning 2015",
+    "verified": true,
+    "notes": "Found during Phase 2 build via the Socrata catalog API - not in the original source list. Monthly granularity, by line x peak/off-peak period (no weekday/weekend split at all, a different split than the incidents dataset above). additional_platform_time + additional_train_time = average extra minutes per rider, per MTA's own published methodology. Includes W (unlike the incidents datasets above)."
   },
 
   "gtfs_static_subway_regular": {

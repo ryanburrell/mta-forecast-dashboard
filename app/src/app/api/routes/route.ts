@@ -7,7 +7,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("routes")
-    .select("route_id, route_name, mode")
+    .select("route_id, route_name, route_color, mode")
     .order("route_id");
 
   if (error) {

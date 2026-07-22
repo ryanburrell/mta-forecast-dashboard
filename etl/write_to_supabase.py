@@ -81,6 +81,22 @@ def upsert_station_routes(client: Client, station_routes: pd.DataFrame) -> None:
         client.table("station_routes").upsert(chunk, on_conflict="station_complex_id,route_id").execute()
 
 
+def upsert_route_shapes(client: Client, route_shapes: pd.DataFrame) -> None:
+    """Depends on routes already being upserted (FK constraint)."""
+    records = []
+    for row in route_shapes.to_dict(orient="records"):
+        wkt_points = ", ".join(f"{lon} {lat}" for lon, lat in row["points"])
+        records.append(
+            {
+                "route_id": row["route_id"],
+                "shape_id": row["shape_id"],
+                "geom": f"SRID=4326;LINESTRING({wkt_points})",
+            }
+        )
+    for chunk in _chunked(records):
+        client.table("route_shapes").upsert(chunk, on_conflict="route_id,shape_id").execute()
+
+
 def insert_model_run(client: Client, model_name: str, data_window_start, data_window_end, notes: str) -> int:
     resp = (
         client.table("model_runs")
@@ -120,6 +136,18 @@ def insert_station_demand(client: Client, station_demand: pd.DataFrame, model_ru
         client.table("station_demand").upsert(chunk, on_conflict="station_complex_id,day_of_week,model_run_id").execute()
 
 
+def insert_forecast_delay_risk(client: Client, forecast_delay_risk: pd.DataFrame, model_run_id: int) -> None:
+    df = forecast_delay_risk.copy()
+    df["model_run_id"] = model_run_id
+    records = _clean_nans(
+        df[
+            ["route_id", "day_of_week", "p_incident", "expected_delay_minutes", "expected_degradation_pct", "model_run_id"]
+        ].to_dict(orient="records")
+    )
+    for chunk in _chunked(records):
+        client.table("forecast_delay_risk").upsert(chunk, on_conflict="route_id,day_of_week,model_run_id").execute()
+
+
 def write_model_1_results(result: dict) -> int:
     """Writes a model_1_demand_supply.run_model_1() result dict to Supabase.
     Returns the new model_run_id."""
@@ -146,6 +174,32 @@ def write_model_1_results(result: dict) -> int:
     try:
         insert_forecast_demand_supply(client, result["forecast_demand_supply"], model_run_id)
         insert_station_demand(client, result["station_demand"], model_run_id)
+    except Exception:
+        client.table("model_runs").delete().eq("id", model_run_id).execute()
+        raise
+
+    return model_run_id
+
+
+def write_model_2_results(result: dict) -> int:
+    """Writes a model_2_delay_risk.run_model_2() result dict to Supabase.
+    Returns the new model_run_id."""
+    client = get_client()
+
+    upsert_routes(client, result["routes_ref"])  # idempotent - safe even if Model 1 already ran this
+    upsert_route_shapes(client, result["route_shapes"])
+
+    window_start = min(result["incident_window_start_month"], result["delay_minutes_window_start_month"])
+    window_end = max(result["incident_window_end_month"], result["delay_minutes_window_end_month"])
+    notes = (
+        f"Model 2 (incident rate + delay minutes). "
+        f"Incidents window {result['incident_window_start_month']}..{result['incident_window_end_month']}, "
+        f"delay-minutes window {result['delay_minutes_window_start_month']}..{result['delay_minutes_window_end_month']}."
+    )
+    model_run_id = insert_model_run(client, "model_2", window_start, window_end, notes)
+
+    try:
+        insert_forecast_delay_risk(client, result["forecast_delay_risk"], model_run_id)
     except Exception:
         client.table("model_runs").delete().eq("id", model_run_id).execute()
         raise

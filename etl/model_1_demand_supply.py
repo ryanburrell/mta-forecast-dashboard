@@ -70,8 +70,15 @@ def compute_station_demand(ridership_df: pd.DataFrame) -> pd.DataFrame:
     return station_demand
 
 
-def run_model_1(training_window_days: int = pull_mta_data.DEFAULT_TRAINING_WINDOW_DAYS) -> dict[str, object]:
-    """Run the full Model 1 pipeline. Returns a dict of DataFrames plus run metadata."""
+def run_model_1(
+    training_window_days: int = pull_mta_data.DEFAULT_TRAINING_WINDOW_DAYS,
+    gtfs_tables: dict[str, pd.DataFrame] | None = None,
+) -> dict[str, object]:
+    """Run the full Model 1 pipeline. Returns a dict of DataFrames plus run metadata.
+
+    gtfs_tables can be pre-loaded and shared with Model 2 (run_pipeline.py does this)
+    to avoid downloading the ~20MB feed twice in one pipeline run.
+    """
     ridership_raw = pull_mta_data.fetch_ridership_window(days=training_window_days)
     window_start, window_end = ridership_raw.attrs["window_start"], ridership_raw.attrs["window_end"]
 
@@ -86,7 +93,7 @@ def run_model_1(training_window_days: int = pull_mta_data.DEFAULT_TRAINING_WINDO
     route_demand = compute_route_demand(ridership)
     station_demand = compute_station_demand(ridership)
 
-    gtfs_tables = pull_gtfs.load_gtfs_tables()
+    gtfs_tables = gtfs_tables or pull_gtfs.load_gtfs_tables()
     route_supply = pull_gtfs.fetch_scheduled_trips_by_route_dow(gtfs_tables)
     routes_ref = pull_gtfs.build_routes_reference(gtfs_tables)
 
