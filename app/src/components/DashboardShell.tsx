@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import useSWR from "swr";
 import ParameterPanel from "@/components/parameter-panel/ParameterPanel";
 import DemandSupplyChart from "@/components/charts/DemandSupplyChart";
@@ -105,6 +106,9 @@ export default function DashboardShell() {
         <p className="text-sm text-zinc-500">
           Forecasted ridership, scheduled service, and delay risk, by route and date.
         </p>
+        <Link href="/rationale" className="mt-1 inline-block text-sm text-zinc-500 hover:underline">
+          Why these forecasts are built this way &rarr;
+        </Link>
       </header>
 
       <ParameterPanel
