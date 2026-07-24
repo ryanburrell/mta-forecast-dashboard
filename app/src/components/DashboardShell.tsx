@@ -106,9 +106,14 @@ export default function DashboardShell() {
         <p className="text-sm text-zinc-500">
           Forecasted ridership, scheduled service, and delay risk, by route and date.
         </p>
-        <Link href="/rationale" className="mt-1 inline-block text-sm text-zinc-500 hover:underline">
-          Why these forecasts are built this way &rarr;
-        </Link>
+        <div className="mt-1 flex gap-4">
+          <Link href="/explainer" className="text-sm text-zinc-500 hover:underline">
+            Project methodology &rarr;
+          </Link>
+          <Link href="/rationale" className="text-sm text-zinc-500 hover:underline">
+            Why these forecasts are built this way &rarr;
+          </Link>
+        </div>
       </header>
 
       <ParameterPanel
